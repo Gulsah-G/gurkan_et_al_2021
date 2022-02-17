@@ -4,6 +4,7 @@ rm(list=ls())
 
 # Load libraries.
 library(dplyr)
+library(tidyr)
 library(readr)
 library(stringr)
 library(survey)
@@ -207,6 +208,107 @@ for (dd in c("Q1","Q4")) {
   write_xlsx(KHB.output, path = paste0("Output\\KHB_",dd,"_out.xlsx"))
   
 }
+
+
+#
+
+# Data arrays.----
+## DataD.
+#load.
+KHB_Q1_out <- readxl::read_xlsx("Output\\KHB_Q1_out.xlsx") %>% as.data.frame() 
+KHB_Q4_out <- readxl::read_xlsx("Output\\KHB_Q4_out.xlsx") %>% as.data.frame() 
+#select and reshape
+khb_q1q4 <- KHB_Q1_out %>% 
+  select(CNTRYID, coeff, Difference, z.value, p.value) %>%
+  mutate(p.value = ifelse(round(p.value,6)>0, round(p.value,6), 0.000001)) %>% 
+  pivot_longer(names_to = "out", cols = c("Difference", "z.value", "p.value")) %>% 
+  pivot_wider(names_from = coeff, values_from = value) %>% 
+  rename_with(~ paste0(.,"Q1D"), -c(CNTRYID, out)) %>% 
+  left_join(
+    KHB_Q4_out %>% 
+      select(CNTRYID, coeff, Difference, z.value, p.value) %>%
+      mutate(p.value = ifelse(round(p.value,6)>0, round(p.value,6), 0.000001)) %>% 
+      pivot_longer(names_to = "out", cols = c("Difference", "z.value", "p.value")) %>% 
+      pivot_wider(names_from = coeff, values_from = value) %>% 
+      rename_with(~ paste0(.,"Q4D"), -c(CNTRYID, out)),
+    by = c("CNTRYID"="CNTRYID", "out"="out")
+  )
+#combine into an array
+DataD <- abind::abind(khb_q1q4 %>% filter(out=="Difference") %>% select(-c(1:2)), 
+                      khb_q1q4 %>% filter(out=="z.value") %>% select(-c(1:2)), 
+                      khb_q1q4 %>% filter(out=="p.value") %>% select(-c(1:2)), 
+                      rev.along = 0)
+dimnames(DataD) <- list(khb_q1q4$CNTRYID %>% unique(),
+                        khb_q1q4 %>% select(-c(1:2)) %>% names(),
+                        c('coef','stat','pValue'))
+#export.
+save("DataD", file = "Output\\DataD")
+
+
+
+## DataC.
+#load.
+M3_Q1_out <- readxl::read_xlsx("Output\\M3_Q1_out.xlsx") %>% as.data.frame()
+M3_Q4_out <- readxl::read_xlsx("Output\\M3_Q4_out.xlsx") %>% as.data.frame()
+#select and reshape
+m3_q1q4 <- M3_Q1_out %>% 
+  select(CNTRYID, coef, M3, z.value, p.value) %>%
+  mutate(p.value = ifelse(round(p.value,6)>0, round(p.value,6), 0.000001)) %>% 
+  pivot_longer(names_to = "out", cols = c("M3", "z.value", "p.value")) %>% 
+  pivot_wider(names_from = coef, values_from = value) %>% 
+  rename_with(~ paste0(.,"Q1"), -c(CNTRYID, out)) %>% 
+  left_join(
+    M3_Q4_out %>% 
+      select(CNTRYID, coef, M3, z.value, p.value) %>%
+      mutate(p.value = ifelse(round(p.value,6)>0, round(p.value,6), 0.000001)) %>% 
+      pivot_longer(names_to = "out", cols = c("M3", "z.value", "p.value")) %>% 
+      pivot_wider(names_from = coef, values_from = value) %>% 
+      rename_with(~ paste0(.,"Q4"), -c(CNTRYID, out)),
+    by = c("CNTRYID"="CNTRYID", "out"="out")
+  )
+#combine into an array
+DataC <- abind::abind(m3_q1q4 %>% filter(out=="M3") %>% select(-c(1:2)), 
+                      m3_q1q4 %>% filter(out=="z.value") %>% select(-c(1:2)), 
+                      m3_q1q4 %>% filter(out=="p.value") %>% select(-c(1:2)), 
+                      rev.along = 0)
+dimnames(DataC) <- list(m3_q1q4$CNTRYID %>% unique(),
+                        m3_q1q4 %>% select(-c(1:2)) %>% names(),
+                        c('coef','stat','pValue'))
+#export.
+save("DataC", file = "Output\\DataC")
+
+
+
+## DataCM1.
+#load.
+M1_Q1_out <- readxl::read_xlsx("Output\\M1_Q1_out.xlsx") %>% as.data.frame()
+M1_Q4_out <- readxl::read_xlsx("Output\\M1_Q4_out.xlsx") %>% as.data.frame()
+#select and reshape
+m1_q1q4 <- M1_Q1_out %>% 
+  select(CNTRYID, coef, M1, z.value, p.value) %>%
+  mutate(p.value = ifelse(round(p.value,6)>0, round(p.value,6), 0.000001)) %>% 
+  pivot_longer(names_to = "out", cols = c("M1", "z.value", "p.value")) %>% 
+  pivot_wider(names_from = coef, values_from = value) %>% 
+  rename_with(~ paste0(.,"Q1"), -c(CNTRYID, out)) %>% 
+  left_join(
+    M1_Q4_out %>% 
+      select(CNTRYID, coef, M1, z.value, p.value) %>%
+      mutate(p.value = ifelse(round(p.value,6)>0, round(p.value,6), 0.000001)) %>% 
+      pivot_longer(names_to = "out", cols = c("M1", "z.value", "p.value")) %>% 
+      pivot_wider(names_from = coef, values_from = value) %>% 
+      rename_with(~ paste0(.,"Q4"), -c(CNTRYID, out)),
+    by = c("CNTRYID"="CNTRYID", "out"="out")
+  )
+#combine into an array
+DataCM1 <- abind::abind(m1_q1q4 %>% filter(out=="M1") %>% select(-c(1:2)), 
+                        m1_q1q4 %>% filter(out=="z.value") %>% select(-c(1:2)), 
+                        m1_q1q4 %>% filter(out=="p.value") %>% select(-c(1:2)), 
+                        rev.along = 0)
+dimnames(DataCM1) <- list(m1_q1q4$CNTRYID %>% unique(),
+                          m1_q1q4 %>% select(-c(1:2)) %>% names(),
+                          c('coef','stat','pValue'))
+#export.
+save("DataCM1", file = "Output\\DataCM1")
 
 
 #
